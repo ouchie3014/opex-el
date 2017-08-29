@@ -1,0 +1,242 @@
+<link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+
+<style>
+
+  form {
+    padding: 5px;
+  }
+
+  form > div {
+    margin-bottom: 10px;
+  }
+  
+  input[type=text] {
+    width: 125px;
+  }
+  
+  .aligncenter {
+    text-align: center;
+  }
+  
+  button {
+    margin-bottom: 10px;
+  }
+
+
+</style>
+
+
+<form>
+  <h2>Sheet Names:</h2>
+  
+  <div>
+    <input type="text" name="sheetNameMain" id="sheetNameMain" />
+    <label for="sheetNameMain">Main Database</label>
+  </div>
+  
+  <div>
+    <input type="text" name="sheetNameInventory" id="sheetNameInventory" />
+    <label for="sheetNameInventory">Inventory Database</label>
+  </div>
+  
+  <div>
+    <input type="text" name="sheetNamePM" id="sheetNamePM" />
+    <label for="sheetNamePM">PM Database</label>
+  </div>
+  
+  <div>
+    <input type="text" name="sheetNameSnapshot" id="sheetNameSnapshot" />
+    <label for="sheetNameSnapshot">Snapshot</label>
+  </div>
+
+  <hr>
+
+  <h2>Email Settings:</h2>
+  	
+  <div>
+    <input type="checkbox" name="enableAutoEmailing" id="enableAutoEmailing" />
+    <label for="enableAutoEmailing">Auto Snapshot Request</label>
+  </div>
+  
+  <div>
+    <input type="text" name="warehouse" id="warehouse" />
+    <label for="warehouse">Warehouse</label>
+  </div>
+  
+  <div>
+    <input type="text" name="region" id="region" />
+    <label for="region">Region</label>
+  </div>
+  
+  <div>
+    <input type="text" name="gmailSnapshotLabel" id="gmailSnapshotLabel" />
+    <label for="gmailSnapshotLabel">Gmail Snapshot Label</label>
+  </div>
+  
+  <div>
+    <input type="text" name="latestSnapshotSheet" id="latestSnapshotSheet" />
+    <label for="latestSnapshotSheet">Latest Snapshot Sheet Name</label>
+  </div>
+  
+  <div>
+    <select id="emailSnapshotRequestHr" name="emailSnapshotRequestHr" style="min-width: 50px;">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
+      <option value="11">11</option>
+      <option value="12">12</option>
+      <option value="13">13</option>
+      <option value="14">14</option>
+      <option value="15">15</option>
+      <option value="16">16</option>
+      <option value="17">17</option>
+      <option value="18">18</option>
+      <option value="19">19</option>
+      <option value="20">20</option>
+      <option value="21">21</option>
+      <option value="22">22</option>
+      <option value="23">23</option>
+      <option value="24">24</option>
+    </select>
+    <label for="emailSnapshotRequestHr">Email Snapshot Request Hour</label>
+  </div>
+  
+  <div>
+    <select id="updateSnapshotHr" name="updateSnapshotHr" style="min-width: 50px;">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
+      <option value="11">11</option>
+      <option value="12">12</option>
+      <option value="13">13</option>
+      <option value="14">14</option>
+      <option value="15">15</option>
+      <option value="16">16</option>
+      <option value="17">17</option>
+      <option value="18">18</option>
+      <option value="19">19</option>
+      <option value="20">20</option>
+      <option value="21">21</option>
+      <option value="22">22</option>
+      <option value="23">23</option>
+      <option value="24">24</option>
+    </select>
+    <label for="updateSnapshotHr">Update Snapshot Hour</label>
+  </div>
+  
+  <hr>
+  
+  <h2>Document ID's</h2>
+  
+  <div>
+    <label for="mainSSid">Main Sheet ID</label><br>
+    <textarea name="mainSSid" id="mainSSid" rows="2" style="width:100%;"></textarea>
+  </div>
+  
+  <div>
+    <label for="snapshotSSid">Latest Snapshot Sheet ID</label><br>
+    <textarea name="snapshotSSid" id="snapshotSSid" rows="2" style="width:100%;"></textarea>
+  </div>
+  
+  <div>
+    <label for="snapshotFolderId">Snapshot Folder ID</label><br>
+    <textarea name="snapshotFolderId" id="snapshotFolderId" rows="2" style="width:100%;"></textarea>
+  </div>
+  
+  <div>
+    <label for="autoBackupFolderId">AutoBackup Folder ID</label><br>
+    <textarea name="autoBackupFolderId" id="autoBackupFolderId" rows="2" style="width:100%;"></textarea>
+  </div>
+
+  <hr>
+
+  <h2>Backups:</h2>
+  
+  <div>
+    <input type="text" name="maxBackupsToKeep" id="maxBackupsToKeep" />
+    <label for="maxBackupsToKeep">Max Backups to Keep</label>
+  </div>
+  
+  <hr>
+  
+  <div class="aligncenter">
+    <button onclick="saveSettings()" value="Submit" class="action">Save</button>
+    <button onclick="google.script.host.close()">Cancel</button>
+    <br>
+    <button onclick="google.script.run.withSuccessHandler(google.script.host.close).restoreDefaultSettings();" class="create">Restore Defaults</button>
+  
+  </div>
+
+</form>
+
+
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+
+<script>
+
+
+  $(function() {
+    google.script.run.withSuccessHandler(loadPreferences)
+    .withFailureHandler(showError).getPreferences();
+  });
+
+
+  function saveSettings() {
+    google.script.run.withSuccessHandler(google.script.host.close).saveSidebarSettings(document.forms[0]);
+  }
+  
+  
+
+  
+  function loadPreferences(sheetSettings) {
+  
+
+    document.getElementById('sheetNameMain').value = sheetSettings.sheetNameMain;
+    document.getElementById('sheetNameInventory').value = sheetSettings.sheetNameInventory;
+    document.getElementById('sheetNamePM').value = sheetSettings.sheetNamePM;
+    document.getElementById('sheetNameSnapshot').value = sheetSettings.sheetNameSnapshot;
+    
+    if (sheetSettings.enableAutoEmailing == "on") {
+      document.getElementById('enableAutoEmailing').checked = true;
+    } else {
+      document.getElementById('enableAutoEmailing').checked = false;
+    }
+    
+    document.getElementById('warehouse').value = sheetSettings.warehouse;
+    document.getElementById('region').value = sheetSettings.region;
+    document.getElementById('gmailSnapshotLabel').value = sheetSettings.gmailSnapshotLabel;
+    document.getElementById('latestSnapshotSheet').value = sheetSettings.latestSnapshotSheet;
+    document.getElementById('emailSnapshotRequestHr').value = parseInt(sheetSettings.emailSnapshotRequestHr);
+    document.getElementById('updateSnapshotHr').value = parseInt(sheetSettings.updateSnapshotHr);
+    
+    document.getElementById('maxBackupsToKeep').value = parseInt(sheetSettings.maxBackupsToKeep);
+    
+    document.getElementById('mainSSid').value = sheetSettings.mainSSid;
+    document.getElementById('snapshotSSid').value = sheetSettings.snapshotSSid;
+    document.getElementById('snapshotFolderId').value = sheetSettings.snapshotFolderId; 
+    document.getElementById('autoBackupFolderId').value = sheetSettings.autoBackupFolderId; 
+    
+  }
+  
+  
+  function showError(msg, element) {
+    var div = $('<div id="error" class="error">' + msg + '</div>');
+    $(element).after(div);
+  }
+  
+</script>
