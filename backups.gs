@@ -1,29 +1,35 @@
 function backupSheetToXlsx() {
   //Backup this sheet to backups folder
-  try {
-    console.info("Backing up main spreadsheet...");
-    console.time("Backing up main spreadsheet...Completed! Time: ");
-    var ss = SpreadsheetApp.getActive();
-    var autoBackupFolderId = loadSetting('autoBackupFolderId'); //Backup storage folder
-    var folder = DriveApp.getFolderById(autoBackupFolderId);
-    var url = "https://docs.google.com/feeds/download/spreadsheets/Export?key=" + ss.getId() + "&exportFormat=xlsx";
-    var params = {
-      method      : "get",
-      headers     : {"Authorization": "Bearer " + ScriptApp.getOAuthToken()},
-      muteHttpExceptions: true
-    };
-    
-    var blob = UrlFetchApp.fetch(url, params).getBlob();
-    var fileDate = dateFileName(new Date());
-    
-    blob.setName(ss.getName() + " - " + fileDate + ".xlsx");
-    folder.createFile(blob);
-    deleteOlderBackups();
-  } catch (f) {
-    console.error("backupSheetToXlsx had an error: " + f.toString());
-  } finally {
-    console.info("Backing up main spreadsheet...Completed!");
-    console.timeEnd("Backing up main spreadsheet...Completed! Time: ");
+  var lastBackupToXlsx = loadSetting('lastBackupToXlsx');
+  if (!lastBackupToXlsx || lastBackupToXlsx !== formatDate(new Date())) {
+    try {
+      console.info("Backing up main spreadsheet...");
+      console.time("Backing up main spreadsheet...Completed! Time: ");
+      var ss = SpreadsheetApp.getActive();
+      var autoBackupFolderId = loadSetting('autoBackupFolderId'); //Backup storage folder
+      var folder = DriveApp.getFolderById(autoBackupFolderId);
+      var url = "https://docs.google.com/feeds/download/spreadsheets/Export?key=" + ss.getId() + "&exportFormat=xlsx";
+      var params = {
+        method      : "get",
+        headers     : {"Authorization": "Bearer " + ScriptApp.getOAuthToken()},
+        muteHttpExceptions: true
+      };
+      
+      var blob = UrlFetchApp.fetch(url, params).getBlob();
+      var fileDate = dateFileName(new Date());
+      
+      blob.setName(ss.getName() + " - " + fileDate + ".xlsx");
+      folder.createFile(blob);
+      deleteOlderBackups();
+      saveSetting('lastBackupToXlsx', formatDate(new Date()));
+    } catch (f) {
+      console.error("backupSheetToXlsx had an error: " + f.toString());
+    } finally {
+      console.info("Backing up main spreadsheet...Completed!");
+      console.timeEnd("Backing up main spreadsheet...Completed! Time: ");
+    }
+  } else {
+    console.warn('Main spreadsheet has already been backed up today!');
   }
 }
 
@@ -71,7 +77,7 @@ function findOldestBackup() {
   var folder = DriveApp.getFolderById(autoBackupFolderId);
   var arryFileDates,file,fileDate,files,
       oldestDate,oldestFileId,oldestFileName,objFilesByDate,objFilesByName;
-  console.info('Looking for oldest excel backup file in folder: ' + folder);
+  console.log('Looking for oldest excel backup file in folder: ' + folder);
   arryFileDates = [];
   objFilesByDate = {};
   files = folder.getFilesByType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
