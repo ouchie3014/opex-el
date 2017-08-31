@@ -23,38 +23,51 @@ function include(filename) {
 }
 
 function updateAllTriggers() {
+  console.info('Updating all triggers...');
   var emailSnapshotRequestHr = loadSetting('emailSnapshotRequestHr');
   var updateSnapshotHr = loadSetting('updateSnapshotHr');
+  var lastTriggerUpdate = loadSetting('lastTriggerUpdate');
 
-  //Delete all existing triggers
-  deleteTriggers();
+  if (!lastTriggerUpdate || lastTriggerUpdate !== formatDate(new Date())) {
+    //Delete all existing triggers
+    deleteTriggers();
+    
+    // Trigger every Monday at 09:00.
+    ScriptApp.newTrigger('sendEmail')
+        .timeBased()
+        .atHour(emailSnapshotRequestHr)
+        .everyDays(1)
+        .create();
   
-  // Trigger every Monday at 09:00.
-  ScriptApp.newTrigger('sendEmail')
-      .timeBased()
-      .atHour(emailSnapshotRequestHr)
-      .everyDays(1)
-      .create();
-
-  ScriptApp.newTrigger('updateSnapshot')
-      .timeBased()
-      .atHour(updateSnapshotHr)
-      .everyDays(1)
-      .create();
-
-  ScriptApp.newTrigger('backupSheetToXlsx')
-      .timeBased()
-      .atHour(1)
-      .everyDays(1)
-      .create();
-
-  ScriptApp.newTrigger('updateAllTriggers')
-      .timeBased()
-      .atHour(1)
-      .everyDays(1)
-      .create();
+    ScriptApp.newTrigger('updateSnapshot')
+        .timeBased()
+        .atHour(updateSnapshotHr)
+        .everyDays(1)
+        .create();
   
-  console.log("All triggers updated");
+    ScriptApp.newTrigger('backupSheetToXlsx')
+        .timeBased()
+        .atHour(1)
+        .everyDays(1)
+        .create();
+  
+    ScriptApp.newTrigger('monitorRecentlySubmitted')
+        .timeBased()
+        .everyMinutes(1)
+        .create();
+  
+    ScriptApp.newTrigger('updateAllTriggers')
+        .timeBased()
+        .atHour(1)
+        .everyDays(1)
+        .create();
+    
+    saveSetting('lastTriggerUpdate', formatDate(new Date()));
+    console.info("All triggers updated");
+  } else {
+    console.warn('All triggers have already been updated today!');
+  }
+  
 }
 
 function deleteTriggers() {
@@ -63,7 +76,7 @@ function deleteTriggers() {
   for (var i = 0; i < allTriggers.length; i++) {
     ScriptApp.deleteTrigger(allTriggers[i]);
   }
-  console.log("All triggers deleted");
+  console.info("All triggers deleted");
 }
 
 //Formats date into DD/MM/YYYY
@@ -79,26 +92,24 @@ function formatDate(rawDate) {
 function dateFileName(rawDate) {
   var date = "";
   if (rawDate) {
-    //var day = rawDate.getDate();
-    //var month = rawDate.getMonth() + 1;
-    //var year = rawDate.getFullYear();
-    //if (day < 10) { day = "0" + day;}
-    //if (month < 10) { month = "0" + month;}
-    //date = year + "-" + month + "-" + day;
     date = Utilities.formatDate(rawDate, "GMT", "yyyy-MM-dd");
   }
   return date;
 }
 
 function onEdit () {
-  console.log("Sheet has been edited, updating ALL helper links");
-  updateAllHelperLinks(); //Update all links if spreadsheet is edited
+  var sheetNameMain = loadSetting('sheetNameMain');
+  var activeRow = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet().getActiveCell().getRow();
+  console.info("Sheet has been edited, updating row: " + activeRow);
+  updateHelperLinks(activeRow, 1); //Update last edited row
 }
 
-function getMainData () {
+function getMainData (startRow,numRows) {
   var sheetNameMain = loadSetting('sheetNameMain');
   var mainSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetNameMain);
-  var data = mainSheet.getRange(2,4,mainSheet.getLastRow()-1,7).getValues();
+  var lastRow = mainSheet.getLastRow();
+  
+  var data = mainSheet.getRange(startRow,4,numRows,7).getValues();
   console.log("Downloaded MainDB sheet data");
   return data;
 }
@@ -109,6 +120,7 @@ function getInvData () {
   console.log("Downloaded InventoryDB sheet data");
   return data;
 }
+
 function getPmData () {
   var sheetNamePM = loadSetting('sheetNamePM');
   var pmDataSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetNamePM);
@@ -117,16 +129,34 @@ function getPmData () {
   return data;
 }
 
-//Updates all helper columns in MainDB
-function updateAllHelperLinks () {
-  console.log("Running updateAllHelperLinks()");
-  console.time("updateAllHelperLinks time");
-  var mainRange = getMainData();
-  var inventoryRange = getInvData();
-  var pmData = getPmData();
+function updateHelperLinks(startRow,numRows) {
+  console.info("Updating helper links...");
+  console.time("updateHelperLinks time");
+  console.log("Start row: " + startRow + ". Number of rows: " + numRows);
   
   var sheetNameMain = loadSetting('sheetNameMain');
   var mainSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetNameMain);
+  var lastRow = mainSheet.getLastRow();
+    
+  if (!startRow) {
+    startRow = 2;
+  } else if (startRow < 2) {
+    startRow = 2;
+  } else if (startRow > lastRow) {
+    startRow = 2;
+  }
+  
+  if (!numRows) {
+    numRows = lastRow-startRow+1;
+  } else if (numRows < 1) {
+    numRows = 1;
+  } else if (numRows > (lastRow-startRow+1)) {
+    numRows = lastRow-startRow+1;
+  }
+
+  var mainRange = getMainData(startRow,numRows);
+  var inventoryRange = getInvData();
+  var pmData = getPmData();
   
   var partsUsed = [];
   var partsRep = [];
@@ -136,17 +166,17 @@ function updateAllHelperLinks () {
     partsUsed[i] = mainRange[i][5];
     partsRep[i] = mainRange[i][6];
   }
-  
+
   var serialNumberLinks = snTooltip(serialNumbers,pmData);
   var partsUsedLinks = partsTooltip(partsUsed,inventoryRange);
   var partsRepLinks = partsTooltip(partsRep,inventoryRange);
-  
-  mainSheet.getRange(2, 14, serialNumberLinks.length, 1).setValues(serialNumberLinks);
-  mainSheet.getRange(2, 15, partsUsedLinks.length, 1).setValues(partsUsedLinks);
-  mainSheet.getRange(2, 16, partsRepLinks.length, 1).setValues(partsRepLinks);
-  
-  console.timeEnd("updateAllHelperLinks time");
-  console.log("Updated all HTML links");
+
+  mainSheet.getRange(startRow, 14, serialNumberLinks.length, 1).setValues(serialNumberLinks);
+  mainSheet.getRange(startRow, 15, partsUsedLinks.length, 1).setValues(partsUsedLinks);
+  mainSheet.getRange(startRow, 16, partsRepLinks.length, 1).setValues(partsRepLinks);
+
+  console.timeEnd("updateHelperLinks time");
+  console.info("All helper links updated.");
 }
 
 
@@ -209,7 +239,6 @@ function snTooltip(sn,pm) {
     console.log("PM argument is undefined, downloading PM data"); 
     pm = getPmData();
   }
-  console.log("PM: " + pm[6][3]);
   
   var output = [];
   
@@ -437,22 +466,9 @@ function handleResponse(e) {
 	row.push(e.parameter["PM Type"]);
 	row.push(e.parameter["FSR"]);
     
-    //Uses previous functions to get links for parts and serial number
-    var snParam = [];
-    var usedPartsParam = [];
-    var repPartsParam = [];
-    
-    snParam.push(e.parameter["SN"]);
-    usedPartsParam.push(usedPartsFinal);
-    repPartsParam.push(repPartsFinal);
-    
-    var snLink = snTooltip(snParam, undefined);
-    var usedPartsLink = partsTooltip(usedPartsParam, undefined);
-    var repPartsLink = partsTooltip(repPartsParam, undefined);
-    
-    row.push(snLink);
-    row.push(usedPartsLink);
-    row.push(repPartsLink);
+    row.push(e.parameter["SN"]);
+    row.push(usedPartsFinal);
+    row.push(repPartsFinal);
     
     console.log("Pushed all data into new array: " + row);
     
@@ -466,8 +482,6 @@ function handleResponse(e) {
     return ContentService
           .createTextOutput(JSON.stringify({"result":"success", "row": nextRow}))
           .setMimeType(ContentService.MimeType.JSON);
-    
-    
   } catch(e){
     // if error return this
     return ContentService
@@ -475,6 +489,21 @@ function handleResponse(e) {
           .setMimeType(ContentService.MimeType.JSON);
   } finally { //release lock
     lock.releaseLock();
+    var recentlySubmitted = true;
+    saveSetting('recentlySubmitted',recentlySubmitted); //used to update helper link after sheet has finished calculating inventory numbers
   }
-  updateAllHelperLinks();
+}
+
+function monitorRecentlySubmitted() {
+  //Updates last 5 rows shortly after a form submission from main web page
+  //This script runs every 1 minute.
+  var recentlySubmitted = loadSetting('recentlySubmitted');
+  if (recentlySubmitted === 'true') {
+    console.log('Form was recently submitted, updating last 5 rows');
+    var sheetNameMain = loadSetting('sheetNameMain');
+    var mainSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetNameMain);
+    updateHelperLinks(mainSheet.getLastRow()-4,5); //updates last 5 rows
+    recentlySubmitted = false;
+    saveSetting('recentlySubmitted',recentlySubmitted);
+  }
 }

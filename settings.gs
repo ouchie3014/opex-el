@@ -69,6 +69,14 @@ function loadSetting(name) {
 }
 
 
+//Used to quickly save settings
+function saveSetting(name,value) {
+  Logger.log('Name: ' + name + '. Value: ' + value);
+  var scriptProperties = PropertiesService.getScriptProperties();
+  scriptProperties.setProperty(name, value);
+}
+
+
 
 function unused() {
 //Location ID's:
