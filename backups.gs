@@ -4,7 +4,7 @@ function backupSheetToXlsx() {
   if (!lastBackupToXlsx || lastBackupToXlsx !== formatDate(new Date())) {
     try {
       console.info("Backing up main spreadsheet...");
-      console.time("Backing up main spreadsheet...Completed! Time: ");
+      console.time("Spreadsheet backup completed! Time: ");
       var ss = SpreadsheetApp.getActive();
       var autoBackupFolderId = loadSetting('autoBackupFolderId'); //Backup storage folder
       var folder = DriveApp.getFolderById(autoBackupFolderId);
@@ -17,16 +17,17 @@ function backupSheetToXlsx() {
       
       var blob = UrlFetchApp.fetch(url, params).getBlob();
       var fileDate = dateFileName(new Date());
+	  var backupName = ss.getName() + " - " + fileDate + ".xlsx";
       
-      blob.setName(ss.getName() + " - " + fileDate + ".xlsx");
+      blob.setName(backupName);
       folder.createFile(blob);
       deleteOlderBackups();
       saveSetting('lastBackupToXlsx', formatDate(new Date()));
     } catch (f) {
       console.error("backupSheetToXlsx had an error: " + f.toString());
     } finally {
-      console.info("Backing up main spreadsheet...Completed!");
-      console.timeEnd("Backing up main spreadsheet...Completed! Time: ");
+      console.info("Main spreadsheet backed up to Google Drive as '" + backupName + "'");
+      console.timeEnd("Spreadsheet backup completed! Time: ");
     }
   } else {
     console.warn('Main spreadsheet has already been backed up today!');
@@ -36,7 +37,7 @@ function backupSheetToXlsx() {
 
 
 function deleteOlderBackups() {
-  console.info("Deleting older backups...");
+  console.info("Checking for outdated backups...");
   var autoBackupFolderId = loadSetting('autoBackupFolderId'); //Backup storage folder
   var folder = DriveApp.getFolderById(autoBackupFolderId);
   var maxBackupsToKeep = loadSetting('maxBackupsToKeep'); //keep max of 30 files in this folder

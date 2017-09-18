@@ -1,5 +1,5 @@
 function sendEmail() {
-  //Scheduled to run at 4-5AM every day
+  //Scheduled to run at 8-9AM every day
   var emailAddress = 'fsr@opex.com';
   var subject = "snapshot";
   var region = loadSetting('region');
@@ -14,19 +14,19 @@ function sendEmail() {
     if (enableAutoEmailing) {
       if (!lastSnapshotRequest || lastSnapshotRequest !== formatDate(new Date())) {  //do not send more than 1 email per day
         MailApp.sendEmail(emailAddress, subject, message);
-        console.info('Email Sent! ... To: ' + emailAddress + ' ... Subject: ' + subject + ' ... Message: ' + message);
+        console.info('Email sent to: ' + emailAddress + ' ... Subject: ' + subject + ' ... Message: ' + message);
         saveSetting('lastSnapshotRequest', formatDate(new Date()));
       } else {
         console.warn('Snapshot has already been requested today!');
       }
     } else {
-      console.info('Auto Emailing is disabled in settings!');
+      console.warn('Auto Emailing is disabled in settings!');
     }
   };
 }
 
 function updateSnapshot() {
-  console.info('Updating Snapshot from gDrive...');
+  console.info('Updating Snapshot from Google Drive...');
   console.time("updateSnapshot time");
   
   var gmailSnapshotLabel = loadSetting('gmailSnapshotLabel');
@@ -49,15 +49,15 @@ function updateSnapshot() {
       
       GmailApp.markMessageRead(msg[0]);
       threads[0].moveToArchive();
-      
+      console.info('Snapshot email archived.');
       
       //Check if excel file with name exists:
       var NewXlsFileNameChk = folder.getFilesByName(NewXlsFileName);
       if (NewXlsFileNameChk.hasNext()) {
-        console.log('Filename ' + NewXlsFileName + ' already exists, skipping writing of file.');
+        console.warn('Filename ' + NewXlsFileName + ' already exists, skipping writing of file.');
         //do nothing
       } else {
-        console.log('File ' + NewXlsFileName + ' has been written to ' + folder);
+        console.info('File ' + NewXlsFileName + ' has been saved to ' + folder);
         blob.setName(NewXlsFileName);
         folder.createFile(blob);
       }
@@ -72,16 +72,15 @@ function updateSnapshot() {
       
       //Check if gSheet with name already exists:
       if (gSheetName.hasNext()) {
-        console.log(".gSheet file already exists, overwriting existing data.");
         var file = gSheetName.next();
+        console.info( file + ".gsheet found. Updating sheet with new data.");
         Drive.Files.update(resource, file.getId(), excelFile);
       } else {
-        console.log("Existing .gSheet file not found, creating new file.");
+        console.warn( "Did not find " + gSheetName.next() + ". Creating new file with latest data.");
         Drive.Files.insert(resource, excelFile);
       }
       
       saveSetting('lastUpdateSnapshot', formatDate(new Date()));
-      console.log('Snapshot saved onto gDrive.');
        
      } catch(e) {
        console.error('There was an error updating the snapshot: ' + e);
@@ -125,7 +124,7 @@ function findNewestFileId(folderId) {
 
 
 function copySnapshotData() {
-  console.info('Copying data from temp gSheet...');
+  console.info('Copying data from temp gSheet to main database');
   try {
     var snapshotSSid = loadSetting('snapshotSSid');
     var mainSSid = loadSetting('mainSSid');
@@ -145,7 +144,5 @@ function copySnapshotData() {
     console.info('Data copied to Snapshot sheet');
   } catch(e) {
     console.error('There was an error copying snapshot data: ' + e);
-  } finally {
-    console.log('copySnapshotData() completed.');
   }
 };

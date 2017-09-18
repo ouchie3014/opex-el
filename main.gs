@@ -2,7 +2,7 @@
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('OPEX Scripts')
-      .addItem('Update HTML Links', 'updateAllHelperLinks')
+      .addItem('Update HTML Links', 'updateHelperLinks')
       .addItem('Request Snapshot Via E-mail', 'sendEmail')
       .addItem('Update Snapshot From Drive', 'updateSnapshot')
       .addItem('Settings', 'showSidebar')
@@ -110,14 +110,14 @@ function getMainData (startRow,numRows) {
   var lastRow = mainSheet.getLastRow();
   
   var data = mainSheet.getRange(startRow,4,numRows,7).getValues();
-  console.log("Downloaded MainDB sheet data");
+  console.log("Retrieved MainDB sheet data");
   return data;
 }
 function getInvData () {
   var sheetNameInventory = loadSetting('sheetNameInventory');
   var inventorySheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetNameInventory);
   var data = inventorySheet.getDataRange().getValues();
-  console.log("Downloaded InventoryDB sheet data");
+  console.log("Retrieved InventoryDB sheet data");
   return data;
 }
 
@@ -125,7 +125,7 @@ function getPmData () {
   var sheetNamePM = loadSetting('sheetNamePM');
   var pmDataSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetNamePM);
   var data = pmDataSheet.getDataRange().getValues();
-  console.log("Downloaded Maintenance sheet data");
+  console.log("Retrieved Maintenance sheet data");
   return data;
 }
 
@@ -176,7 +176,7 @@ function updateHelperLinks(startRow,numRows) {
   mainSheet.getRange(startRow, 16, partsRepLinks.length, 1).setValues(partsRepLinks);
 
   console.timeEnd("updateHelperLinks time");
-  console.info("All helper links updated.");
+  console.info("Helper links updated.");
 }
 
 
@@ -186,7 +186,7 @@ function partsTooltip (parts,inventory) {
   console.time("partsTooltip time");
   
   if (typeof inventory === 'undefined') {
-    console.log("Inventory argument is undefined, downloading inventory data");
+    console.log("Inventory argument is undefined, retrieving inventory data");
     inventory = getInvData();
   }
   
@@ -236,7 +236,7 @@ function snTooltip(sn,pm) {
   console.time("snTooltip time");
   
   if (typeof pm === 'undefined') {
-    console.log("PM argument is undefined, downloading PM data"); 
+    console.log("PM argument is undefined, retrieving PM data"); 
     pm = getPmData();
   }
   
@@ -351,7 +351,7 @@ function doPost(e){
 }
 
 function handleResponse(e) {
-  console.log("Running handleResponse(e): " + e);
+  console.info("Form submission recieved. Processing...");
   console.time("handleResponse time");
   var lock = LockService.getPublicLock();
   lock.waitLock(30000);  // wait 30 seconds before conceding defeat.
@@ -361,8 +361,6 @@ function handleResponse(e) {
     var mainSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetNameMain);
     var nextRow = mainSheet.getLastRow()+1; // get next row
     var row = [];
-    
-    console.log("Found last row: " + nextRow);
     
     //include timestamp
     var now = new Date();
@@ -470,13 +468,11 @@ function handleResponse(e) {
     row.push(usedPartsFinal);
     row.push(repPartsFinal);
     
-    console.log("Pushed all data into new array: " + row);
-    
     //Write array to row in spreadsheet:
     mainSheet.getRange(nextRow, 1, 1, row.length).setValues([row]);
     
     console.timeEnd("handleResponse time");
-    console.log("Completed handleResponse(e)");
+    console.info("Form data processed: " + row);
     
     // return json success results
     return ContentService

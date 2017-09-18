@@ -57,7 +57,7 @@ function initSheet() {
   scriptProperties.setProperty('snapshotFolderId', snapshotFolderIdDefault);
   scriptProperties.setProperty('autoBackupFolderId', autoBackupFolderIdDefault);
   
-  console.log("Sheet Initialized! Default settings stored!");
+  console.warn("Sheet Initialized! Default settings stored!");
 }
 
 
@@ -137,7 +137,7 @@ function saveSidebarSettings(form) {
   scriptProperties.setProperty('snapshotFolderId', form.snapshotFolderId);
   scriptProperties.setProperty('autoBackupFolderId', form.autoBackupFolderId);
   
-  console.log("Settings saved.");
+  console.info("Sidebar settings saved.");
   
 }
 
@@ -166,7 +166,7 @@ function getPreferences() {
     snapshotFolderId: scriptProperties.getProperty('snapshotFolderId'),
     autoBackupFolderId: scriptProperties.getProperty('autoBackupFolderId')
   };
-  console.log("Settings loaded.");
+  console.log("Sidebar settings loaded.");
   return sheetSettings;
 }
 
@@ -194,12 +194,12 @@ function restoreDefaultSettings() {
   scriptProperties.setProperty('snapshotFolderId', snapshotFolderIdDefault);
   scriptProperties.setProperty('autoBackupFolderId', autoBackupFolderIdDefault);
   
-  console.log("Settings restored to default values.");
+  console.warn("All settings restored to default values.");
   
 }
 
 function deleteAllSettings() {
   var scriptProperties = PropertiesService.getScriptProperties();
   scriptProperties.deleteAllProperties();
-  console.log("All stored settings deleted!.");
+  console.warn("All stored settings deleted!.");
 }
