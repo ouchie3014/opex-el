@@ -63,17 +63,41 @@ function initSheet() {
 
 //Used to quickly get stored settings
 function loadSetting(name) {
-  var scriptProperties = PropertiesService.getScriptProperties();
-  var output = scriptProperties.getProperty(name) || '';
+  console.log("Loading setting: '" + name + "'");
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Properties");
+  var lastRow = sheet.getLastRow();
+  var data = sheet.getRange(1,1,lastRow,2).getValues();
+  var output = "";
+  for(i=0;i<data.length;i++){
+    if (data[i][0] == name) {
+      var output = data[i][1];
+    }
+  }
+  if (output == "") {
+    console.warn("Setting not found!");
+  } else {
+    console.log("Setting loaded with value: '" + output + "'");
+  }
   return output;
 }
 
 
 //Used to quickly save settings
 function saveSetting(name,value) {
-  Logger.log('Name: ' + name + '. Value: ' + value);
-  var scriptProperties = PropertiesService.getScriptProperties();
-  scriptProperties.setProperty(name, value);
+  console.log("Saving setting: '" + name + "'. Value: '" + value + "'");
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Properties");
+  var lastRow = sheet.getLastRow();
+  var data = sheet.getRange(1,1,lastRow,2).getValues();
+  for(i=0;i<data.length;i++){
+    if (data[i][0] == name) {
+      sheet.getRange(i + 1, 2).setValue(value);
+      console.log("Setting saved!");
+    } else if (i+1 == data.length) {
+      console.warn("Setting not found, making new entry!")    
+      sheet.getRange(i + 2, 1).setValue(name);
+      sheet.getRange(i + 2, 2).setValue(value);
+    }
+  }
 }
 
 

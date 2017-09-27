@@ -99,9 +99,13 @@ function dateFileName(rawDate) {
 
 function onEdit () {
   var sheetNameMain = loadSetting('sheetNameMain');
-  var activeRow = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet().getActiveCell().getRow();
-  console.info("Sheet has been edited, updating row: " + activeRow);
-  updateHelperLinks(activeRow, 1); //Update last edited row
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var activeSheetName = sheet.getName();
+  if (activeSheetName == sheetNameMain) {
+    var activeRow = sheet.getActiveCell().getRow();
+    console.info("Sheet has been edited, updating row: " + activeRow);
+    updateHelperLinks(activeRow, 1); //Update last edited row
+  }
 }
 
 function getMainData (startRow,numRows) {
@@ -361,6 +365,7 @@ function handleResponse(e) {
     var mainSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetNameMain);
     var nextRow = mainSheet.getLastRow()+1; // get next row
     var row = [];
+    var editRow = parseInt(e.parameter["editRow"]);
     
     //include timestamp
     var now = new Date();
@@ -463,13 +468,19 @@ function handleResponse(e) {
 	row.push(e.parameter["Notes"]);
 	row.push(e.parameter["PM Type"]);
 	row.push(e.parameter["FSR"]);
-    
     row.push(e.parameter["SN"]);
     row.push(usedPartsFinal);
     row.push(repPartsFinal);
     
-    //Write array to row in spreadsheet:
-    mainSheet.getRange(nextRow, 1, 1, row.length).setValues([row]);
+    //Write array to row in spreadsheet, or edit existing
+    if (!editRow) {
+      console.log("Writing new entry on row: " + nextRow);
+      mainSheet.getRange(nextRow, 1, 1, row.length).setValues([row]);
+    } else {
+      console.log("Editing existing entry on row: " + editRow);
+      mainSheet.getRange(editRow, 1, 1, row.length).setValues([row]);
+      saveSetting('lastRowUpdated',editRow);
+    }
     
     console.timeEnd("handleResponse time");
     console.info("Form data processed: " + row);
@@ -495,10 +506,18 @@ function monitorRecentlySubmitted() {
   //This script runs every 1 minute.
   var recentlySubmitted = loadSetting('recentlySubmitted');
   if (recentlySubmitted === 'true') {
-    console.log('Form was recently submitted, updating last 5 rows');
+    console.log('Form was recently submitted...');
     var sheetNameMain = loadSetting('sheetNameMain');
     var mainSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetNameMain);
-    updateHelperLinks(mainSheet.getLastRow()-4,5); //updates last 5 rows
+    var lastRowUpdated = loadSetting('lastRowUpdated');
+    if (lastRowUpdated) {
+      console.log('updating row: ' + lastRowUpdated);
+      updateHelperLinks(lastRowUpdated,1); //updates last edited row
+      saveSetting('lastRowUpdated',"");
+    } else {
+      console.log('updating last 5 rows');
+      updateHelperLinks(mainSheet.getLastRow()-4,5); //updates last 5 rows
+    }
     recentlySubmitted = false;
     saveSetting('recentlySubmitted',recentlySubmitted);
   }
