@@ -87,6 +87,8 @@ function saveSetting(name,value) {
   console.log("Saving setting: '" + name + "'. Value: '" + value + "'");
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Properties");
   var lastRow = sheet.getLastRow();
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
   var data = sheet.getRange(1,1,lastRow,2).getValues();
   for(i=0;i<data.length;i++){
     if (data[i][0] == name) {
@@ -98,6 +100,7 @@ function saveSetting(name,value) {
       sheet.getRange(i + 2, 2).setValue(value);
     }
   }
+  lock.releaseLock();
 }
 
 
